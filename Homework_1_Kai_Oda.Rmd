@@ -269,23 +269,31 @@ It's not uncommon in ecology to restrict our analyses to species that comprise t
 
 ```{r}
 # First calculate the fraction that each species represents of the whole and save in a new column named "fraction".
-birds$fraction <- ...
+count_total <- sum(birds$Count)
+
+birds$fraction <- birds$Count/count_total
 
 
 # Now order the dataframe in descending order based on this fraction.
-birds <- birds[order(...),]
+birds <- birds[order(birds$fraction),]
 
 
 # Use the cumsum function to calculate the cumulative sum of the fractions and save in another column.
-birds$cumsum <- ...
-
+birds$cumsum <- cumsum(birds$fraction)
+#cumsum(1:4)
 
 # Now subset your data to include only the birds with the cumulative sum <90%.
-bird_sub <- subset(...)
+## second argument is the logic to exclude certain values 
+## third argument is which columns to keep from the original dataset 
+bird_sub <- subset(birds, birds$cumsum<0.9, 
+                   select=Species:cumsum)
+#?subset
 
 ## You can also do this with indices:
-#birds_sub <- birds[which(birds$cumsum <0.9),]
+birds_sub <- birds[which(birds$cumsum <0.9),]
 
+birds_sub_2 <- birds[which(birds$cumsum <0.9, ), ]
+#?which
 
 # how many bird species are there in the dataset?
 
@@ -296,7 +304,7 @@ bird_sub <- subset(...)
 ```
 
 [Fill in below:]
-There are ??? species in the dataset, but only ??? accounted for 90% of the counts.
+There are __43__ species in the dataset, but only __1__ accounted for 90% of the counts.
 
 
 #### d. Extract subsets of the data by matching text strings
@@ -306,11 +314,12 @@ Let's say we want to extract counts from only certain types of birds.
 
 ```{r}
 # Ex. extract information about vultures using the grep() function
+#?grep
 grep("Vulture",birds$Species)
 # This tells me that rows 14 and 20 contain vultures
 
 # I can make a mini dataframe by simply using the indices:
-birds[c(14,20),]
+birds[c(23,30),]
 
 # I can do this in one line like so:
 birds[grep("Vulture",birds$Species),]
@@ -319,8 +328,11 @@ birds[grep("Vulture",birds$Species),]
 #### Your turn: make two mini dataframes of 1) cowbirds and 2) doves (4pts)
 
 ```{r}
+cowbirds <- birds[grep("Cowbird",birds$Species), ]
+head(cowbirds)
 
-
+doves <- birds[grep("Dove", birds$Species), ]
+head(doves)
 ```
 
 #### e. Combining data frames
@@ -335,10 +347,11 @@ Hint: it is easiest to change the name of the column containing the common names
 new_birds <- read.delim("BirdFuncDat.txt") # read.delim is used for .txt files
 dim(new_birds)
 names(new_birds)
+#changes the name of column 9 from "English" to "Species"
 names(new_birds)[9] <- "Species"
 
 # combine tables
-birds2 <- ...
+birds2 <- merge(birds,new_birds,by="Species")
 
 # There are likely some NA values which mean that some species had no match. You can see which ones using a line of code like this:
 birds2$Species[which(is.na(birds2$SpecID))]
@@ -346,7 +359,10 @@ birds2$Species[which(is.na(birds2$SpecID))]
 # It looks like many of these are missing because the names are abbreviated. One option is to manually change the names in your small dataset to the full names to see if you get more matches (rather than manually searching through the new_birds dataset). Another is to use the View() function and manually search using ctrl+F. Sometimes you might need to do a little research to see if there are synonyms (e.g. there is a Rock Dove in our dataset, but a Rock Pigeon in the new dataset). You'll learn how to edit values within R in the next question. For now we will proceed with a quick plot.
 
 # Make a plot of your choosing using the new data.
-ggplot(...)
+ggplot(birds2, aes(x=Species,y=Diet.Inv))+
+  geom_col()+
+  labs(x="Species", y="Invertebrates consumed")+
+  theme_bw()
 
 # We will come back to larger datasets like these later in the quarter. You might find this to be useful resource for your final projects.
 
@@ -360,7 +376,7 @@ Import the endangered dataset and save as a dataframe named "endangered".
 
 ```{r}
 
-endangered <- ...
+endangered <- read.csv("endangered.csv")
 
 ```
 
@@ -368,15 +384,23 @@ endangered <- ...
 #### a. You realize that there is a mistake in the dataframe -- there are actually 93 endangered mammals. Change this value in the dataframe using indices. (3pts)
 
 ```{r}
-
+dim(endangered)
+endangered[1, 3] <- 93
 
 ```
 
 #### a. Using ggplot, construct a column graph that displays the taxon on the x axis and the number of species on the y axis. Color-code the columns by vertebrate status. (5pts)
 
 ```{r}
+str(endangered)
+# if (endangered$vertebrate=="yes") {
+#   print("Hello world")
+# }
 
-ggplot(...)
+ggplot(endangered, aes(x=taxon, y=no.species))+
+  geom_col(color=endangered$vertebrate, 
+           fill=endangered$vertebrate)+
+  labs(x="Taxon", y="Number of endangered species")
 
 
 ```
@@ -385,9 +409,12 @@ ggplot(...)
 Hint: you will want to use the reorder function with the first argument being the taxon, and the second being the number of species. You can make it descending by using a minus sign.
 
 ```{r}
-
-ggplot(... , aes(x=reorder(...), y=...))+
-  ...
+?reorder
+ggplot(endangered , aes(x=reorder(taxon, -no.species), y=no.species))+
+  geom_col(color=endangered$vertebrate)+
+  labs(x="Taxon", y ="Number of species")+
+  ggtitle("Number of endangered species by taxon")+
+  theme(plot.title = element_text(hjust=0.5))
 
 ```
 
@@ -397,11 +424,16 @@ In general, you will want to take the time to make sure your graphics look neat 
 
 ```{r}
 
-box1 <- ...
+box1 <- ggplot(endangered, aes(x=vertebrate, y=no.species))+
+  geom_boxplot()
 
-violin1 <- ...
+#  
+violin1 <- ggplot(endangered, aes(x=vertebrate, y=no.species))+
+  geom_violin()
 
-ridge1 <- ...
+#  
+ridge1 <- ggplot(endangered, aes(x=no.species, y=vertebrate))+
+  geom_density_ridges(aes(color=vertebrate,fill=vertebrate),alpha=0.3)
 
 grid.arrange(box1,violin1,ridge1, ncol=2)
 
@@ -414,36 +446,39 @@ Import the mammals dataset and check out the first couple of rows.
 
 ```{r}
 
-mammals <- ...
-
+mammals <- read.csv("mammals.csv")
+head(mammals)
 
 ```
 #### a. Change the column names to something easy to work with and sensible (2pts)
 ```{r}
-
-
-
+names(mammals) = c("name", "body_mass", "brain_mass")
+head(mammals)
+str(mammals)
 ```
 
 
 #### b. Create a plot that you think will be interesting and informative. Write a sentence about what you notice about the data. (5pts)
 
 ```{r}
-
+ggplot(mammals, aes(x=body_mass, y=brain_mass))+
+  geom_point()
 
 ```
 
-[Write your response here]
+A basic figure shows that brain mass appears to linearly increase with body mass — the apparently linear trend is an interesting observation. 
 
 #### b. What variable could you create that would help you to standardize brain mass among all these different mammals? (3pts)
 
-[Write your response here]
+The brain mass of the animals should be **divided** by the body mass to get a ratio of brain-to-body mass. 
 
 #### c. Create that variable in a new column and name it appropriately. Display the summary statistics for the new dataframe using summary(). (5pts)
 
 ```{r}
 
-mammals$write_new_variable_name_here <- ...
+mammals$brain_ratio <- mammals$brain_mass/mammals$body_mass
+summary(mammals)
+View(mammals)
 
 ```
 
@@ -451,22 +486,20 @@ mammals$write_new_variable_name_here <- ...
 
 ```{r}
 
-ggplot(...)+
-  geom_point(...)+
-  geom_hline(...)+
-  geom_text(...)
+ggplot(mammals, aes(x=body_mass, y=brain_ratio))+
+  geom_point()+
+  geom_hline(yintercept=mean(mammals$brain_ratio))+
+  geom_text(aes(label=name), size=3, vjust="inward", hjust="inward")
 
 
 ```
 
 #### e. Write 2-3 sentences explaining your observations. What does it mean to be above the line or below the line? What do you notice about the types of mammal on either side of the line in general? (8pts)
-
-[Write your response here]
+If the species is above the horizontal line than the animal has a higher brain-to-body mass ratio. However, if the species is below the horizontal line than the animal has a lower brain-to-body mass ratio. High ratio animals include primates such as monkeys as well as humans (arguably the most intelligent species in the dataset). However, there are some low ratio animals that are recognized as intelligent, like the Asian and African elephant. 
 
 
 #### f. Do you think this is a good measure of animal intelligence? Why? (2pts)
 Hint: check out https://en.wikipedia.org/wiki/Brain-to-body_mass_ratio
 
-[Write your response here]
-
+The basic ratio is not a good measure of animal intelligence, but it can be made better by adjusting certain parameters. For example, the article notes that as the animal gets larger the brain-to-body ratio decreases. Therefore, large animals like humans, elephants and whales can have relatively low brain-to-body ratios despite being very intelligent. However, among animals of similar weights and morphologies, brain-to-body ratios can be used as a quick test to examine intelligence as a higher density of neurons could lead to more complex behaviors. 
 

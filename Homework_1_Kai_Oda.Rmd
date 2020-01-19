@@ -1,0 +1,433 @@
+---
+title: "Homework 1"
+author: "Kai Oda"
+date: "1/9/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set("~/Biology/146/Homework 1 Files")
+library(ggplot2)
+library(ggridges)
+library(gridExtra)
+library(dplyr)
+
+```
+
+## Introduction
+
+In this homework, you will learn how to:
+
+* Perform basic data manipulations
+    * Import data
+    * Make data frames
+    * Subset data
+    * Edit cells in data frames
+    * Search for patterns in strings
+    * Join data tables
+
+* Extract summary statistics
+    * Mean, median, sd, var
+    * See how statistics change based on sample size
+
+* Create several different plots using ggplot
+    * Histograms and density plots
+    * Column plot
+    * Boxplot, violin plot, density ridges that compare 2+ variables
+    * Scatterplots and smoothers
+    
+    
+General instructions: Complete all parts of each question, making sure that you answer in writing when relevant. In several places, clues for functions have been provided and you should fill in code where you see "...". Remember to use the help tab in R studio to look up functions. You can find lots of help online, including on our Piazza site.
+
+### Q.1: Caffeine in Coffee (25 pts)
+
+#### a. Import the caffeine dataset and save it as a dataframe titled "caffeine". (1pt)
+
+```{r}
+#I had to open the caffeine.xls file and resave as a .csv. 
+## File type should be adjusted for newer students (or included in instructions)
+caffeine <- read.csv("caffeine.csv")
+names(caffeine) = c("Brand", "Caffeine")
+
+```
+
+#### b. What are the dimensions of the dataframe? (1pt)
+
+```{r}
+#Using the dimensions function 
+dim(caffeine)
+
+```
+## Dimensions 
+14 rows 
+2 columns 
+
+#### c. What are the data types in this data frame? (2pts)
+
+```{r}
+#typeof(caffeine)
+#Supplies information on the data type of each column 
+sapply(caffeine, class)
+##Supplies information on the data type of each column plus some extra information 
+#str(caffeine)
+
+```
+1. Factor (Categorical, nominal)
+2. Numeric (Continuous)
+
+#### d. Compute the mean, standard deviation, and variance for the amount of caffeine for each type of bean. (3pts)
+__What are the different types of beans? So far it only looks like there is one type of bean: "Big Bean"__
+```{r}
+mean(caffeine$Caffeine)
+sd(caffeine$Caffeine)
+var(caffeine$Caffeine)
+
+```
+
+Mean = 188.06
+Standard Deviation = 35.575
+Variation = 1265.61
+
+
+#### e. Create a histogram showing the distribution of caffeine using base plots (3pts)
+
+```{r}
+hist(caffeine$Caffeine, main="Distribution of caffeine", 
+     xlab="Caffeine (mg in 16 oz)")
+```
+
+#### f. Using ggplot, create a histogram and pick an appropriate binwidth (3pts)
+
+```{r}
+# change name for ease (do not change this line)
+names(caffeine)[2] <- "caffeine_total"
+
+#creating the histrogram with ggplot 
+ggplot(caffeine, aes(x=caffeine_total))+
+         geom_histogram(binwidth = 10, 
+                        color="black", 
+                        fill="white")+
+  labs(x="Caffeine total (mg)", y="Frequency")
+
+```
+
+
+We are now interested in seeing how the size of subsamples of this dataset affect our estimates of the mean and standard deviation.
+
+#### g. Using the sample() function, create 10 samples of size 3 and calculate their means (6pts)
+
+```{r}
+# Step by step:
+
+# First create a sample of size 3 to test the function
+sample(10,3)
+#?sample
+
+# Repeat this 10 times using the replicate function and save as samp3
+samp3 <- replicate(10, sample(10,3), simplify = "array")
+#?replicate
+
+# Calculate the mean and sd for each column using the apply function
+mean3 <- apply(samp3, 2, mean)
+sd3 <- apply(samp3, 2, sd)
+#?apply
+
+# Create histograms for the mean and standard deviation values
+#creating the histrogram with ggplot 
+# ggplot(mean3, aes(x=mean3))+
+#          geom_histogram(binwidth = 10, 
+#                         color="black", 
+#                         fill="white")+
+#   labs(x="Mean", y="Frequency")
+
+hist(mean3, main="Histogram for means", 
+     xlab="Mean")
+hist(sd3, main="Histogram for standard deviation", 
+     xlab="Standard Deviation")
+
+```
+
+
+#### Now take what you've done in part g and repeat for samples of sizes 4-14
+(Note: this part doesn't require to you do anything except run the chunk, but you should read the code to see what's happening)
+
+```{r}
+
+# There are lots of different ways to do this, but we are going to use a loop here because it is a bit more intuitive.
+
+# Start by making an empty dataframe that will be filled in by the loop:
+caffeine_samples <- data.frame(size=NULL, mean=NULL, sd=NULL)
+
+# Loop for each sample size from 4 to 14
+for(i in 4:14){ 
+
+# A loop starts with a specification of the range of the loop. When you hit enter, R will start with the first number (4) and plug it in everywhere that there is an "i". When it gets to the bottom, it will return to the top and plug in the next number, repeating until it reaches the last number (14).
+  
+  sample_temp <- replicate(10,sample(caffeine$caffeine_total, i))
+  mean_temp <- apply(sample_temp, 2, mean)
+  sd_temp <- apply(sample_temp, 2, sd)
+  
+  # now put those results in the dataframe
+  caffeine_samples <- rbind(caffeine_samples, data.frame(size=rep(i,10), mean=mean_temp, sd=sd_temp))
+  
+}
+
+head(caffeine_samples)
+
+```
+
+#### i. Now generate a meaningful plot (or two plots) of the caffeine_samples dataframe that shows the relationship between sample size, mean, and standard deviation (4pts)
+
+```{r}
+
+plot1 <- ggplot(...)
+
+plot2 <- ggplot(...)
+
+# Easy way to put multiple plots together
+gridExtra::grid.arrange(plot1, plot2, ncol=2)
+
+```
+
+#### j. In a sentence or two, explain what your graphs show. (2pts)
+
+[Write your response here]
+
+### Q2. Desert Bird Census (20pts)
+
+Import the desert birds dataset as "birds". 
+
+```{r}
+birds <- ...
+
+```
+
+#### a. Create a histogram showing the distribution of the count of birds (1pt)
+
+```{r}
+
+
+```
+
+#### b. Compare and contrast this distribution with the one from the caffeine dataset. Include information about the median and the mean. (3pts)
+
+[Write your response here]
+
+#### c. Using the which.max and which.min functions, return the two bird species with the highest count and the lowest count. (2pts)
+Hint: you can use indices to do this in one line for each species. What does bird[1,] return? What does the which.max function return? How can you combine these?
+
+```{r}
+
+
+```
+
+
+#### d. You decide that you're only interested in looking at birds that represent 90% of the total counts. Create a subset of the data that only contains those more common birds. (6pts)
+It's not uncommon in ecology to restrict our analyses to species that comprise the majority of counts because there can be computational errors when there are many species with few observations.
+
+```{r}
+# First calculate the fraction that each species represents of the whole and save in a new column named "fraction".
+birds$fraction <- ...
+
+
+# Now order the dataframe in descending order based on this fraction.
+birds <- birds[order(...),]
+
+
+# Use the cumsum function to calculate the cumulative sum of the fractions and save in another column.
+birds$cumsum <- ...
+
+
+# Now subset your data to include only the birds with the cumulative sum <90%.
+bird_sub <- subset(...)
+
+## You can also do this with indices:
+#birds_sub <- birds[which(birds$cumsum <0.9),]
+
+
+# how many bird species are there in the dataset?
+
+
+# how many species accounted for 90% of the counts?
+
+
+```
+
+[Fill in below:]
+There are ??? species in the dataset, but only ??? accounted for 90% of the counts.
+
+
+#### d. Extract subsets of the data by matching text strings
+
+You can also use R to deal with text, including searching through strings.
+Let's say we want to extract counts from only certain types of birds.
+
+```{r}
+# Ex. extract information about vultures using the grep() function
+grep("Vulture",birds$Species)
+# This tells me that rows 14 and 20 contain vultures
+
+# I can make a mini dataframe by simply using the indices:
+birds[c(14,20),]
+
+# I can do this in one line like so:
+birds[grep("Vulture",birds$Species),]
+
+```
+#### Your turn: make two mini dataframes of 1) cowbirds and 2) doves (4pts)
+
+```{r}
+
+
+```
+
+#### e. Combining data frames
+
+You realize that you're a bit limited in your dataset and you'd like to add more information that you gathered about these birds for inclusion in later analyses. You found this great paper online (https://esajournals.onlinelibrary.wiley.com/doi/epdf/10.1890/13-1917.1) that provides metadata on bird and mammal species. However, you *really* do not want to have to open up Excel and manually type in all the additional data. Luckily, R has a couple of handy functions to help you combine these datasets. Let's walk through that process.
+
+#### Using the new data created below, combine with the birds dataset and make a plot. (4pts)
+Hint: it is easiest to change the name of the column containing the common names in either one of the two dataframes so that they match in order to combine them. Consider using the merge() function or left_join() function in the dplyr package.
+
+```{r}
+
+new_birds <- read.delim("BirdFuncDat.txt") # read.delim is used for .txt files
+dim(new_birds)
+names(new_birds)
+names(new_birds)[9] <- "Species"
+
+# combine tables
+birds2 <- ...
+
+# There are likely some NA values which mean that some species had no match. You can see which ones using a line of code like this:
+birds2$Species[which(is.na(birds2$SpecID))]
+
+# It looks like many of these are missing because the names are abbreviated. One option is to manually change the names in your small dataset to the full names to see if you get more matches (rather than manually searching through the new_birds dataset). Another is to use the View() function and manually search using ctrl+F. Sometimes you might need to do a little research to see if there are synonyms (e.g. there is a Rock Dove in our dataset, but a Rock Pigeon in the new dataset). You'll learn how to edit values within R in the next question. For now we will proceed with a quick plot.
+
+# Make a plot of your choosing using the new data.
+ggplot(...)
+
+# We will come back to larger datasets like these later in the quarter. You might find this to be useful resource for your final projects.
+
+```
+
+
+### Q3. Endangered Species (20pts)
+
+Import the endangered dataset and save as a dataframe named "endangered".
+
+
+```{r}
+
+endangered <- ...
+
+```
+
+
+#### a. You realize that there is a mistake in the dataframe -- there are actually 93 endangered mammals. Change this value in the dataframe using indices. (3pts)
+
+```{r}
+
+
+```
+
+#### a. Using ggplot, construct a column graph that displays the taxon on the x axis and the number of species on the y axis. Color-code the columns by vertebrate status. (5pts)
+
+```{r}
+
+ggplot(...)
+
+
+```
+
+#### b. Clean up your graph by sorting the counts in descending order using the reorder function, renaming the axes, and giving the plot a title. (5pts)
+Hint: you will want to use the reorder function with the first argument being the taxon, and the second being the number of species. You can make it descending by using a minus sign.
+
+```{r}
+
+ggplot(... , aes(x=reorder(...), y=...))+
+  ...
+
+```
+
+In general, you will want to take the time to make sure your graphics look neat and readable like this in your assignments going forward.
+
+#### c. You now want to compare the distribution of vertebrates and non-vertebrates using several plots. Create 3 plots -- a boxplot, violin plot, and density ridge plot using ggplot (6pts)
+
+```{r}
+
+box1 <- ...
+
+violin1 <- ...
+
+ridge1 <- ...
+
+grid.arrange(box1,violin1,ridge1, ncol=2)
+
+```
+
+
+### Q4: Mammal brain and body size (35pts)
+
+Import the mammals dataset and check out the first couple of rows.
+
+```{r}
+
+mammals <- ...
+
+
+```
+#### a. Change the column names to something easy to work with and sensible (2pts)
+```{r}
+
+
+
+```
+
+
+#### b. Create a plot that you think will be interesting and informative. Write a sentence about what you notice about the data. (5pts)
+
+```{r}
+
+
+```
+
+[Write your response here]
+
+#### b. What variable could you create that would help you to standardize brain mass among all these different mammals? (3pts)
+
+[Write your response here]
+
+#### c. Create that variable in a new column and name it appropriately. Display the summary statistics for the new dataframe using summary(). (5pts)
+
+```{r}
+
+mammals$write_new_variable_name_here <- ...
+
+```
+
+#### d. Now create a new graph that shows the relationship between this variable and the logarithm of body mass. Using geom_hline() draw a straight line showing the mean ratio and label the points with the species names using geom_text(). (10pts)
+
+```{r}
+
+ggplot(...)+
+  geom_point(...)+
+  geom_hline(...)+
+  geom_text(...)
+
+
+```
+
+#### e. Write 2-3 sentences explaining your observations. What does it mean to be above the line or below the line? What do you notice about the types of mammal on either side of the line in general? (8pts)
+
+[Write your response here]
+
+
+#### f. Do you think this is a good measure of animal intelligence? Why? (2pts)
+Hint: check out https://en.wikipedia.org/wiki/Brain-to-body_mass_ratio
+
+[Write your response here]
+
+

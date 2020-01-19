@@ -183,9 +183,15 @@ head(caffeine_samples)
 
 ```{r}
 
-plot1 <- ggplot(...)
+plot1 <- ggplot(caffeine_samples, aes(x=size, y=mean))+
+  geom_point()+
+  labs(x="Sample size", y="Mean (mg)")+
+  ggtitle("Distribution of means vs sample size")
 
-plot2 <- ggplot(...)
+plot2 <- ggplot(caffeine_samples, aes(x=size, y=sd))+
+  geom_point()+
+  labs(x="Sample size", y="Standard Deviation (mg)")+
+  ggtitle("Distribution of SD vs sample size")
 
 # Easy way to put multiple plots together
 gridExtra::grid.arrange(plot1, plot2, ncol=2)
@@ -194,34 +200,67 @@ gridExtra::grid.arrange(plot1, plot2, ncol=2)
 
 #### j. In a sentence or two, explain what your graphs show. (2pts)
 
-[Write your response here]
+As you increase the sample size the means become closer to the actual value. 
+Similarily, increasing the sample size results in a SD closer to the actual value. 
 
 ### Q2. Desert Bird Census (20pts)
 
 Import the desert birds dataset as "birds". 
 
 ```{r}
-birds <- ...
+birds <- read.csv("desert_birds.csv")
+
+head(birds)
+str(birds)
+summary(birds)
+
+str(caffeine)
+summary(caffeine)
 
 ```
 
 #### a. Create a histogram showing the distribution of the count of birds (1pt)
 
 ```{r}
+ggplot(birds, aes(x=Count))+
+  geom_histogram(binwidth=20)+
+  labs(x="Bird count", y="Frequency")+
+  theme_bw()
 
+## caffeine histogram 
+ggplot(caffeine, aes(x=caffeine_total))+
+         geom_histogram(binwidth = 10, 
+                        color="black", 
+                        fill="white")+
+  labs(x="Caffeine total (mg)", y="Frequency")
 
 ```
 
 #### b. Compare and contrast this distribution with the one from the caffeine dataset. Include information about the median and the mean. (3pts)
 
-[Write your response here]
+The median of the "birds" dataset is 18, compared to a median of 176.2 in the caffeine datset. The mean of the birds dataset is 74.77 compared to a mean of 188.1 in the caffeine dataset. 
+The birds dataset is relatively left skewed compared to the caffeine dataset. However, there are a few bird counts that are much larger than the rest of the data, leading to a mean that is larger than the median. Conversely, the median and mean for the caffeine dataset is relatively similar as the data is more evenly distributed. 
 
 #### c. Using the which.max and which.min functions, return the two bird species with the highest count and the lowest count. (2pts)
 Hint: you can use indices to do this in one line for each species. What does bird[1,] return? What does the which.max function return? How can you combine these?
 
 ```{r}
+count(birds)
+birds[1:43, ]
 
+x <- c(1:5, 0:15, 11)
+View(x)
+## Which.max returns the row number of the highest value 
+which.max(x)
 
+#So the highest value in the "count" column is in row 8 
+which.max(birds$Count)
+#And then you can find which species that value corresponds to by referencing the row number in the 
+## birds datset 
+birds[which.max(birds$Count), ]
+
+which.min(birds$Count)
+birds[which.min(birds$Count), ]
 ```
 
 

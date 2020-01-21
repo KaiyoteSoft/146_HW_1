@@ -130,7 +130,7 @@ sample(10,3)
 #?sample
 
 # Repeat this 10 times using the replicate function and save as samp3
-samp3 <- replicate(10, sample(10,3), simplify = "array")
+samp3 <- replicate(10, sample(caffeine$caffeine_total,3), simplify = "array")
 #?replicate
 
 # Calculate the mean and sd for each column using the apply function
@@ -191,10 +191,12 @@ hist(caffeine_samples$mean, main="Histogram for mean values",
 plot1 <- ggplot(caffeine_samples, aes(x=size, y=mean))+
   geom_point()+
   labs(x="Sample size", y="Mean (mg)")+
+  geom_smooth(method="lm")+
   ggtitle("Distribution of means vs sample size")
 
 plot2 <- ggplot(caffeine_samples, aes(x=size, y=sd))+
   geom_point()+
+  geom_smooth(method="lm")+
   labs(x="Sample size", y="Standard Deviation (mg)")+
   ggtitle("Distribution of SD vs sample size")
 
@@ -205,8 +207,8 @@ gridExtra::grid.arrange(plot1, plot2, ncol=2)
 
 #### j. In a sentence or two, explain what your graphs show. (2pts)
 
-As you increase the sample size the means become closer to the actual value. 
-Similarily, increasing the sample size results in a SD closer to the actual value. However, increasing the sample size does not change the actual value of the mean or standard deviation.
+As you increase the sample size the means becomes more precise. 
+Similarily, increasing the sample size results in a SD closer to the actual value. However, increasing the sample size does not change the value of the mean or standard deviation.
 
 ### Q2. Desert Bird Census (20pts)
 
@@ -244,7 +246,7 @@ ggplot(caffeine, aes(x=caffeine_total))+
 #### b. Compare and contrast this distribution with the one from the caffeine dataset. Include information about the median and the mean. (3pts)
 
 The median of the "birds" dataset is 18, compared to a median of 176.2 in the caffeine datset. The mean of the birds dataset is 74.77 compared to a mean of 188.1 in the caffeine dataset. 
-The birds dataset is relatively left skewed compared to the caffeine dataset. However, there are a few bird counts that are much larger than the rest of the data, leading to a mean that is larger than the median. Conversely, the median and mean for the caffeine dataset is relatively similar as the data is more evenly distributed. 
+The birds dataset is relatively more right skewed compared to the caffeine dataset. However, there are a few bird counts that are much larger than the rest of the data, leading to a mean that is larger than the median. Conversely, the median and mean for the caffeine dataset is relatively similar as the data is more evenly distributed. 
 
 #### c. Using the which.max and which.min functions, return the two bird species with the highest count and the lowest count. (2pts)
 Hint: you can use indices to do this in one line for each species. What does bird[1,] return? What does the which.max function return? How can you combine these?
@@ -259,12 +261,12 @@ Hint: you can use indices to do this in one line for each species. What does bir
 # which.max(x)
 
 #So the highest value in the "count" column is in row 8 
-which.max(birds$Count)
+#which.max(birds$Count)
 #And then you can find which species that value corresponds to by referencing the row number in the 
 ## birds datset 
 birds[which.max(birds$Count), ]
 
-which.min(birds$Count)
+#which.min(birds$Count)
 birds[which.min(birds$Count), ]
 ```
 
@@ -280,8 +282,8 @@ birds$fraction <- birds$Count/count_total
 
 
 # Now order the dataframe in descending order based on this fraction.
-birds <- birds[order(birds$fraction),]
-
+birds <- birds[order(birds$fraction, decreasing=TRUE),]
+length(birds$Species)
 
 # Use the cumsum function to calculate the cumulative sum of the fractions and save in another column.
 birds$cumsum <- cumsum(birds$fraction)
@@ -290,26 +292,26 @@ birds$cumsum <- cumsum(birds$fraction)
 # Now subset your data to include only the birds with the cumulative sum <90%.
 ## second argument is the logic to exclude certain values 
 ## third argument is which columns to keep from the original dataset 
-bird_sub <- subset(birds, birds$cumsum<0.9, 
-                   select=Species:cumsum)
-View(bird_sub)
+bird_sub <- subset(birds, birds$cumsum<0.9)
 
 ## You can also do this with indices:
 birds_sub <- birds[which(birds$cumsum <0.9),]
 
 # birds_sub_2 <- birds[which(birds$cumsum <0.9), ]
-#?which
+View(bird_sub)
+length(birds_sub$Species)
+
 
 # how many bird species are there in the dataset?
 43
 
 # how many species accounted for 90% of the counts?
-1
+14
 
 ```
 
 [Fill in below:]
-There are __43__ species in the dataset, but only __1__ accounted for 90% of the counts.
+There are __43__ species in the dataset, but only __14__ accounted for 90% of the counts.
 
 
 #### d. Extract subsets of the data by matching text strings
@@ -367,7 +369,8 @@ birds2$Species[which(is.na(birds2$SpecID))]
 ggplot(birds2, aes(x=Species,y=Diet.Inv))+
   geom_col()+
   labs(x="Species", y="Invertebrates consumed")+
-  theme_bw()
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.6))
 
 # We will come back to larger datasets like these later in the quarter. You might find this to be useful resource for your final projects.
 
@@ -403,8 +406,7 @@ str(endangered)
 # }
 
 ggplot(endangered, aes(x=taxon, y=no.species))+
-  geom_col(color=endangered$vertebrate, 
-           fill=ifelse(endangered$vertebrate=="yes", "red", "black"))+
+  geom_col(aes(fill=vertebrate))+
   labs(x="Taxon", y="Number of endangered species")
 
 ```
@@ -415,8 +417,7 @@ Hint: you will want to use the reorder function with the first argument being th
 ```{r}
 #?reorder
 ggplot(endangered , aes(x=reorder(taxon, -no.species), y=no.species))+
-  geom_col(color=endangered$vertebrate, 
-            fill=ifelse(endangered$vertebrate=="yes", "red", "black"))+
+  geom_col(aes(fill=vertebrate))+
   labs(x="Taxon", y ="Number of species")+
   ggtitle("Number of endangered species by taxon")+
   theme(plot.title = element_text(hjust=0.5))
@@ -495,10 +496,11 @@ View(mammals)
 
 ```{r}
 
-ggplot(mammals, aes(x=body_mass, y=brain_ratio))+
+ggplot(mammals, aes(x=log10(body_mass), y=brain_ratio))+
   geom_point()+
   geom_hline(yintercept=mean(mammals$brain_ratio))+
-  geom_text(aes(label=name), size=3, vjust="inward", hjust="inward")
+  geom_text(aes(label=name), size=3, vjust="inward", hjust="inward", check_overlap = T)+
+  labs(x="Body mass (log)", y="Brain-to-body ratio ")
 
 
 ```

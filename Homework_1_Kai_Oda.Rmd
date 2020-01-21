@@ -14,6 +14,8 @@ library(ggplot2)
 library(ggridges)
 library(gridExtra)
 library(dplyr)
+library(tidyverse)
+library(ggpmisc)
 
 ```
 
@@ -48,8 +50,9 @@ General instructions: Complete all parts of each question, making sure that you 
 
 ```{r}
 #I had to open the caffeine.xls file and resave as a .csv. 
-## File type should be adjusted for newer students (or included in instructions)
+## File type should be adjusted for newer students (originally came as a .xlsx NOT a csv)
 caffeine <- read.csv("caffeine.csv")
+#Changes column names to nicer names
 names(caffeine) = c("Brand", "Caffeine")
 
 ```
@@ -59,7 +62,7 @@ names(caffeine) = c("Brand", "Caffeine")
 ```{r}
 #Using the dimensions function 
 dim(caffeine)
-
+#14 rows, 2 columns
 ```
 ## Dimensions 
 14 rows 
@@ -72,7 +75,7 @@ dim(caffeine)
 #Supplies information on the data type of each column 
 sapply(caffeine, class)
 ##Supplies information on the data type of each column plus some extra information 
-#str(caffeine)
+str(caffeine)
 
 ```
 1. Factor (Categorical, nominal)
@@ -110,7 +113,7 @@ ggplot(caffeine, aes(x=caffeine_total))+
          geom_histogram(binwidth = 10, 
                         color="black", 
                         fill="white")+
-  labs(x="Caffeine total (mg)", y="Frequency")
+  labs(x="Caffeine total (mg in a 16oz cup)", y="Frequency")
 
 ```
 
@@ -176,6 +179,8 @@ for(i in 4:14){
 }
 
 head(caffeine_samples)
+hist(caffeine_samples$mean, main="Histogram for mean values",
+     xlab="Mean")
 
 ```
 
@@ -201,7 +206,7 @@ gridExtra::grid.arrange(plot1, plot2, ncol=2)
 #### j. In a sentence or two, explain what your graphs show. (2pts)
 
 As you increase the sample size the means become closer to the actual value. 
-Similarily, increasing the sample size results in a SD closer to the actual value. 
+Similarily, increasing the sample size results in a SD closer to the actual value. However, increasing the sample size does not change the actual value of the mean or standard deviation.
 
 ### Q2. Desert Bird Census (20pts)
 
@@ -245,13 +250,13 @@ The birds dataset is relatively left skewed compared to the caffeine dataset. Ho
 Hint: you can use indices to do this in one line for each species. What does bird[1,] return? What does the which.max function return? How can you combine these?
 
 ```{r}
-count(birds)
-birds[1:43, ]
-
-x <- c(1:5, 0:15, 11)
-View(x)
-## Which.max returns the row number of the highest value 
-which.max(x)
+# count(birds)
+# birds[1:43, ]
+# 
+# x <- c(1:5, 0:15, 11)
+# View(x)
+# ## Which.max returns the row number of the highest value 
+# which.max(x)
 
 #So the highest value in the "count" column is in row 8 
 which.max(birds$Count)
@@ -287,19 +292,19 @@ birds$cumsum <- cumsum(birds$fraction)
 ## third argument is which columns to keep from the original dataset 
 bird_sub <- subset(birds, birds$cumsum<0.9, 
                    select=Species:cumsum)
-#?subset
+View(bird_sub)
 
 ## You can also do this with indices:
 birds_sub <- birds[which(birds$cumsum <0.9),]
 
-birds_sub_2 <- birds[which(birds$cumsum <0.9, ), ]
+# birds_sub_2 <- birds[which(birds$cumsum <0.9), ]
 #?which
 
 # how many bird species are there in the dataset?
-
+43
 
 # how many species accounted for 90% of the counts?
-
+1
 
 ```
 
@@ -399,9 +404,8 @@ str(endangered)
 
 ggplot(endangered, aes(x=taxon, y=no.species))+
   geom_col(color=endangered$vertebrate, 
-           fill=endangered$vertebrate)+
+           fill=ifelse(endangered$vertebrate=="yes", "red", "black"))+
   labs(x="Taxon", y="Number of endangered species")
-
 
 ```
 
@@ -409,9 +413,10 @@ ggplot(endangered, aes(x=taxon, y=no.species))+
 Hint: you will want to use the reorder function with the first argument being the taxon, and the second being the number of species. You can make it descending by using a minus sign.
 
 ```{r}
-?reorder
+#?reorder
 ggplot(endangered , aes(x=reorder(taxon, -no.species), y=no.species))+
-  geom_col(color=endangered$vertebrate)+
+  geom_col(color=endangered$vertebrate, 
+            fill=ifelse(endangered$vertebrate=="yes", "red", "black"))+
   labs(x="Taxon", y ="Number of species")+
   ggtitle("Number of endangered species by taxon")+
   theme(plot.title = element_text(hjust=0.5))
@@ -462,7 +467,11 @@ str(mammals)
 
 ```{r}
 ggplot(mammals, aes(x=body_mass, y=brain_mass))+
-  geom_point()
+  geom_point()+
+  labs(x="Body mass",y="Brain mass")+
+  geom_smooth(method="lm")+
+  stat_fit_glance(method = 'lm', geom = 'text', aes(label = paste0('p = ', round(..p.value.., 3))))
+
 
 ```
 
@@ -495,7 +504,7 @@ ggplot(mammals, aes(x=body_mass, y=brain_ratio))+
 ```
 
 #### e. Write 2-3 sentences explaining your observations. What does it mean to be above the line or below the line? What do you notice about the types of mammal on either side of the line in general? (8pts)
-If the species is above the horizontal line than the animal has a higher brain-to-body mass ratio. However, if the species is below the horizontal line than the animal has a lower brain-to-body mass ratio. High ratio animals include primates such as monkeys as well as humans (arguably the most intelligent species in the dataset). However, there are some low ratio animals that are recognized as intelligent, like the Asian and African elephant. 
+If the species is above the horizontal line than the animal has a higher than average brain-to-body mass ratio. However, if the species is below the horizontal line than the animal has a lower than average brain-to-body mass ratio. High ratio animals include primates such as monkeys as well as humans (arguably the most intelligent species in the dataset). However, there are some low ratio animals that are recognized as intelligent, like the Asian and African elephant. 
 
 
 #### f. Do you think this is a good measure of animal intelligence? Why? (2pts)
